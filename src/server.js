@@ -1,9 +1,6 @@
 const app = require('express')()
 const consign = require('consign')
 
-swaggerJsdoc = require("swagger-jsdoc"),
-swaggerUi = require("swagger-ui-express");
-
 require('dotenv').config()
 require('./config/db')
 
