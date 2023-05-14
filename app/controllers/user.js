@@ -1,25 +1,24 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-
+const modelsUser = require('../models/User')
 const crypto = require('crypto')
-const mailer = require('../../modules/mailer')
+
 const client = require('../../modules/mailer')
+
+const { User } = modelsUser()
 
 const jwt_key = process.env.JWT_SECRET
 
-module.exports = app => {
+const generateToken = (params = {}) => {
+  return jwt.sign(params, jwt_key, {
+    expiresIn: 86400
+  })
+}
 
-  const { User } = app.app.models.User
-
-  // generate token
-  const generateToken = (params = {}) => {
-    return jwt.sign(params, jwt_key, {
-      expiresIn: 86400
-    })
-  }
+module.exports = {
 
   // register
-  const register = async (req, res) => {
+  register: async (req, res) => {
     const { email } = req.body
 
     try {
@@ -41,9 +40,9 @@ module.exports = app => {
       return res.status(400).send({ error: 'Registration failed.' })
     }
   }
-
+  ,
   // authenticate
-  const auth = async (req, res) => {
+  auth: async (req, res) => {
     const { email, password } = req.body
 
     const user = await User.findOne({ email }).select('+password')
@@ -63,14 +62,15 @@ module.exports = app => {
       token: generateToken({ id: user.id })
     })
   }
+  ,
 
   // user profile
-  const userProfile = async (req, res) => {
+  userProfile: async (req, res) => {
     res.send({ ok: true, user: req.userId })
   }
-
+  ,
   // forgot password
-  const forgotPassword = async (req, res) => {
+  forgotPassword: async (req, res) => {
     const { email } = req.body
 
     try {
@@ -130,9 +130,9 @@ module.exports = app => {
       return res.status(400).send({ error: 'Error on forgot password, try again' })
     }
   }
-
+  ,
   // reset password
-  const resetPassword = async (req, res) => {
+  resetPassword: async (req, res) => {
     const { email, token, password } = req.body
 
     try {
@@ -159,8 +159,8 @@ module.exports = app => {
       res.status(400).send({ error: 'Cannot reset password, try again.' })
     }
   }
-
-  const listUsers = async (req, res) => {
+  ,
+  listUsers: async (req, res) => {
     try {
       const users = await User.find().select('-passwordResetToken -passwordResetExpires')
 
@@ -170,7 +170,6 @@ module.exports = app => {
     }
   }
 
-  return { register, auth, userProfile, forgotPassword, resetPassword, listUsers }
 }
 
 

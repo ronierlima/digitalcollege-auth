@@ -1,25 +1,25 @@
+const userController = require('../app/controllers/user');
+const authTokenMiddleware = require('../app/middlewares/authToken');
+
 module.exports = app => {
-  app.post('/register', app.app.controllers.user.register)
-  app.post('/auth', app.app.controllers.user.auth)
-  app.post('/auth/forgot_password', app.app.controllers.user.forgotPassword)
-  app.post('/auth/reset_password', app.app.controllers.user.resetPassword)
+
+  app.post('/register', userController.register)
+  app.post('/auth', userController.auth)
+  app.post('/auth/forgot_password', userController.forgotPassword)
+  app.post('/auth/reset_password', userController.resetPassword)
 
   app.route('/user')
-    .all(app.app.middlewares.authToken.authenticationJWT)
-    .get(app.app.controllers.user.userProfile)
+    .all(authTokenMiddleware.authenticationJWT)
+    .get(userController.userProfile)
 
-  app.route('/users')
-    .all(app.app.middlewares.authToken.authenticationJWT)
-    .get(app.app.controllers.user.listUsers)
+  // app.route('/projects')
+  //   .all(app.app.middlewares.authToken.authenticationJWT)
+  //   .post(app.app.controllers.project.createProject)
+  //   .get(app.app.controllers.project.getProject)
 
-  app.route('/projects')
-    .all(app.app.middlewares.authToken.authenticationJWT)
-    .post(app.app.controllers.project.createProject)
-    .get(app.app.controllers.project.getProject)
-
-  app.route('/projects/:projectId')
-    .all(app.app.middlewares.authToken.authenticationJWT)
-    .get(app.app.controllers.project.getProjectById)
-    .delete(app.app.controllers.project.removeProject)
-    .put(app.app.controllers.project.updateProject)
+  // app.route('/projects/:projectId')
+  //   .all(app.app.middlewares.authToken.authenticationJWT)
+  //   .get(app.app.controllers.project.getProjectById)
+  //   .delete(app.app.controllers.project.removeProject)
+  //   .put(app.app.controllers.project.updateProject)
 }
