@@ -28,29 +28,33 @@ app.get('/swagger.json', (_, res) => {
   res.send(swaggerDocument);
 });
 
-app.post('/auth', userController.auth)
+app.post('/auth/login', userController.auth)
 app.post('/auth/forgot_password', userController.forgotPassword)
 app.post('/auth/reset_password', userController.resetPassword)
 
 app.route('/users')
   .post(userController.register)
-  .all(authTokenMiddleware.authenticationJWT)
   .get(userController.listUsers)
 
 app.route('/users/:user_id')
-  .all(authTokenMiddleware.authenticationJWT)
   .get(userController.getUserById)
+  .all(authTokenMiddleware.authenticationJWT)
   .put(userController.updateUserById)
   .delete(userController.deleteUserById)
 
-app.get('/users/:user_id/links', userController.getUserLinks)
-
-app.route('/links')
-  // .all(authTokenMiddleware.authenticationJWT)
+app.route('/users/:user_id/links')
+  .get(userController.getUserLinks)
   .post(linkController.createLink)
+  .put(linkController.updateLinkById)
+
+app.route('/users/:user_id/links/:link_id')
+  .get(linkController.getLinkById)
+  .all(authTokenMiddleware.authenticationJWT)
+  .put(linkController.updateLinkById)
+  .delete(linkController.deleteLinkById)
 
 
-app.get("/", (_, res) => { 
+app.get("/", (_, res) => {
   return res.status(200).send('Hello World')
 })
 

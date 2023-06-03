@@ -15,12 +15,15 @@ module.exports = () => {
       type: String,
       required: true
     },
+    imageUrl: {
+      type: String,
+    },
     isPublic: {
       type: Boolean,
       required: true,
       default: true
     },
-    user: {
+    userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true

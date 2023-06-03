@@ -1,49 +1,125 @@
-module.exports = {
+const swaggerDocument = {
   "openapi": "3.0.0",
   "info": {
-    "title": "Documentação da API de Meus Links",
-    "version": "1.0.0"
+    "title": "API - Meus Links",
+    "description": "API para gerenciar links de usuários",
+    "version": "1.0.1"
   },
-  "tags": [
-    {
-      "name": "Usuários",
-      "description": "Endpoints relacionados aos usuários"
-    }
-  ],
+   
   "paths": {
-    "/users": {
-      "get": {
-        "summary": "Listar usuários",
-        "tags": ["Usuários"],
-        "security": [
-          {
-            "bearerAuth": []
+    "/auth/login": {
+      "post": {
+        "summary": "Autenticação de usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": ["email", "password"]
+              }
+            }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "Usuários encontrados",
+            "description": "Autenticação bem-sucedida",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "users": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/User"
-                      }
+                    "token": {
+                      "type": "string"
                     }
                   }
                 }
               }
             }
+          },
+          "401": {
+            "description": "Credenciais inválidas"
           }
         }
-      },
+      }
+    },
+    "/auth/forgot_password": {
       "post": {
-        "summary": "Cadastrar novo usuário",
-        "tags": ["Usuários"],
+        "summary": "Solicitar redefinição de senha",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Solicitação de redefinição de senha enviada"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/auth/reset_password": {
+      "post": {
+        "summary": "Redefinir senha",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": ["token", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Senha redefinida com sucesso"
+          },
+          "401": {
+            "description": "Token inválido"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "summary": "Registrar novo usuário",
         "requestBody": {
           "required": true,
           "content": {
@@ -55,207 +131,72 @@ module.exports = {
                     "type": "string"
                   },
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email"
                   },
                   "password": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 7
                   }
-                }
+                },
+                "required": ["name", "email", "password"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Usuário cadastrado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Usuário registrado com sucesso"
           },
           "400": {
-            "description": "Já existe um usuário cadastrado com esse email",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Dados inválidos"
+          },
+          "409": {
+            "description": "Email já cadastrado"
           }
         }
-      }
-    },
-    "/users/auth": {
-      "post": {
-        "summary": "Autenticar usuário",
-        "tags": ["Usuários"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
+      },
+      "get": {
+        "summary": "Listar usuários",
         "responses": {
           "200": {
-            "description": "Usuário autenticado com sucesso",
+            "description": "Lista de usuários",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    },
-                    "token": {
-                      "type": "string"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
                     }
                   }
                 }
               }
             }
           },
-          "400": {
-            "description": "Usuário não encontrado ou senha inválida",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/users/forgot-password": {
-      "post": {
-        "summary": "Solicitar redefinição de senha",
-        "tags": ["Usuários"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "E-mail enviado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Usuário não encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/users/reset-password": {
-      "post": {
-        "summary": "Redefinir senha",
-        "tags": ["Usuários"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string"
-                  },
-                  "token": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Senha atualizada com sucesso"
-          },
-          "400": {
-            "description": "Usuário não encontrado ou token inválido"
+          "401": {
+            "description": "Não autorizado"
           }
         }
       }
     },
     "/users/{user_id}": {
-
       "get": {
         "summary": "Obter usuário por ID",
-        "tags": ["Usuários"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "parameters": [
           {
             "name": "user_id",
@@ -274,13 +215,27 @@ module.exports = {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   }
                 }
               }
             }
+          },
+          "401": {
+            "description": "Não autorizado"
           },
           "404": {
             "description": "Usuário não encontrado"
@@ -289,7 +244,6 @@ module.exports = {
       },
       "put": {
         "summary": "Atualizar usuário por ID",
-        "tags": ["Usuários"],
         "security": [
           {
             "bearerAuth": []
@@ -316,10 +270,12 @@ module.exports = {
                     "type": "string"
                   },
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email"
                   },
                   "password": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 7
                   }
                 }
               }
@@ -328,19 +284,10 @@ module.exports = {
         },
         "responses": {
           "200": {
-            "description": "Usuário atualizado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Usuário atualizado com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
           },
           "404": {
             "description": "Usuário não encontrado"
@@ -348,8 +295,94 @@ module.exports = {
         }
       },
       "delete": {
-        "summary": "Deletar usuário por ID",
-        "tags": ["Usuários"],
+        "summary": "Excluir usuário por ID",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário excluído com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/users/{user_id}/links": {
+      "get": {
+        "summary": "Obter links do usuário",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de links do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "imageUrl": {
+                        "type": "string"
+                      },
+                      "isPublic": {
+                        "type": "boolean"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar novo link para o usuário",
         "security": [
           {
             "bearerAuth": []
@@ -365,12 +398,285 @@ module.exports = {
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "imageUrl": {
+                    "type": "string"
+                  },
+                  "isPublic": {
+                    "type": "boolean"
+                  },
+                  "userId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["title", "url", "userId"]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Usuário deletado com sucesso"
+            "description": "Link criado com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
           },
           "404": {
             "description": "Usuário não encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar link por ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "imageUrl": {
+                    "type": "string"
+                  },
+                  "isPublic": {
+                    "type": "boolean"
+                  },
+                  "userId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Link atualizado com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Usuário ou link não encontrado"
+          }
+        }
+      }
+    },
+    "/users/{user_id}/links/{link_id}": {
+      "get": {
+        "summary": "Obter link por ID",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Link encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "imageUrl": {
+                      "type": "string"
+                    },
+                    "isPublic": {
+                      "type": "boolean"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Usuário ou link não encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar link por ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "imageUrl": {
+                    "type": "string"
+                  },
+                  "isPublic": {
+                    "type": "boolean"
+                  },
+                  "userId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Link atualizado com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Usuário ou link não encontrado"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Excluir link por ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Link excluído com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Usuário ou link não encontrado"
           }
         }
       }
@@ -383,26 +689,8 @@ module.exports = {
         "scheme": "bearer",
         "bearerFormat": "JWT"
       }
-    },
-    "schemas": {
-      "User": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "isAdmin": {
-            "type": "boolean"
-          }
-        }
-      }
     }
   }
 }
+
+module.exports = swaggerDocument;

@@ -1,25 +1,18 @@
 const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
+
 const { User } = require('../models')
 const { Link } = require('../models');
+
+const userView = require('../views/user')
 
 const crypto = require('crypto')
 
 const emailService = require('../../services/emailService')
 const attributeExistenceMiddleware = require('../middlewares/attributeExistenceMiddleware');
-const { getUserIdFromToken } = require('../middlewares/authToken');
-
-const jwt_key = process.env.JWT_SECRET
-
-const generateToken = (params = {}) => {
-  return jwt.sign(params, jwt_key, {
-    expiresIn: 86400
-  })
-}
+const { getUserIdFromToken, generateToken } = require('../middlewares/authToken');
 
 module.exports = {
 
-  // register
   register: [
     attributeExistenceMiddleware(User),
     async (req, res) => {
@@ -41,19 +34,16 @@ module.exports = {
 
         await user.save()
 
-        user.password = undefined
-
         await emailService.sendWelcomeEmail(user);
 
-        return res.send(user)
+        return res.send(userView.render(user))
 
       } catch (err) {
         return res.status(400).send({ error: 'Falha no cadastro de novo usuário.' })
       }
     }
-  ]
-  ,
-  // authenticate
+  ],
+
   auth: async (req, res) => {
     const { email, password } = req.body
 
@@ -67,15 +57,12 @@ module.exports = {
       return res.status(400).send({ error: 'Invalid password.' })
     }
 
-    user.password = undefined
-
     res.send({
-      user,
+      user: userView.render(user),
       token: generateToken({ id: user.id })
     })
-  }
-  ,
-  // forgot password
+  },
+
   forgotPassword: [
     attributeExistenceMiddleware(User),
     async (req, res) => {
@@ -111,7 +98,6 @@ module.exports = {
     }
   ],
 
-  // reset password
   resetPassword: async (req, res) => {
     const { email, token, password } = req.body
 
@@ -138,13 +124,13 @@ module.exports = {
     } catch (err) {
       res.status(400).send({ error: 'Cannot reset password, try again.' })
     }
-  }
+  },
 
-  ,
   listUsers: async (_, res) => {
     try {
       const users = await User.find().select('-passwordResetToken -passwordResetExpires')
-      res.json(users)
+
+      res.json(userView.renderMany(users))
     } catch (error) {
       console.log(error)
       res.status(500).json({ error: 'Erro ao buscar os usuários' })
@@ -160,7 +146,7 @@ module.exports = {
         return res.status(404).json({ error: 'Usuário não encontrado' })
       }
 
-      res.json(user)
+      res.json(userView.render(user))
     } catch (error) {
       console.log(error)
       res.status(500).json({ error: 'Erro ao buscar o usuário' })
@@ -185,7 +171,7 @@ module.exports = {
           return res.status(404).json({ error: 'Usuário não encontrado' })
         }
 
-        res.json(user)
+        res.json(userView.render(user))
       } catch (error) {
         console.log(error)
         res.status(500).json({ error: 'Erro ao atualizar o usuário' })
@@ -209,7 +195,6 @@ module.exports = {
     }
   },
 
-  // Obtém todos os links de um usuário específico
   getUserLinks: async (req, res) => {
     try {
 

@@ -46,8 +46,12 @@ module.exports = {
       console.error('Erro na verificação do token:', error);
       return null;
     }
+  },
+
+  generateToken: (params = {}) => {
+    return jwt.sign(params, jwt_key, {
+      expiresIn: 86400
+    })
   }
-
-
 }
 
