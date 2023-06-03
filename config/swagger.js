@@ -1,7 +1,7 @@
 module.exports = {
   "openapi": "3.0.0",
   "info": {
-    "title": "Documentação da API de Usuários",
+    "title": "Documentação da API de Meus Links",
     "version": "1.0.0"
   },
   "tags": [

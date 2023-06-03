@@ -9,6 +9,7 @@ require('./config/db')
 const app = express();
 
 const userController = require('./app/controllers/user');
+const linkController = require('./app/controllers/link');
 const authTokenMiddleware = require('./app/middlewares/authToken');
 const swaggerDocument = require('./config/swagger')
 
@@ -42,10 +43,15 @@ app.route('/users/:user_id')
   .put(userController.updateUserById)
   .delete(userController.deleteUserById)
 
+app.get('/users/:user_id/links', userController.getUserLinks)
 
-app.get("/", (req, res) => {
-  console.log(`teste`)
-  return res.status(200).send({ teste: 'teste' })
+app.route('/links')
+  // .all(authTokenMiddleware.authenticationJWT)
+  .post(linkController.createLink)
+
+
+app.get("/", (_, res) => { 
+  return res.status(200).send('Hello World')
 })
 
 app.listen(port, () => {

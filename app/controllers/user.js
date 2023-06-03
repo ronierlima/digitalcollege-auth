@@ -1,12 +1,13 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const modelsUser = require('../models/User')
+const { User } = require('../models')
+const { Link } = require('../models');
+
 const crypto = require('crypto')
 
 const emailService = require('../../services/emailService')
-const attributeExistenceMiddleware = require('../middlewares/attributeExistenceMiddleware')
-
-const { User } = modelsUser()
+const attributeExistenceMiddleware = require('../middlewares/attributeExistenceMiddleware');
+const { getUserIdFromToken } = require('../middlewares/authToken');
 
 const jwt_key = process.env.JWT_SECRET
 
@@ -41,12 +42,10 @@ module.exports = {
         await user.save()
 
         user.password = undefined
-        
+
         await emailService.sendWelcomeEmail(user);
 
-        return res.send({
-          user
-        })
+        return res.send(user)
 
       } catch (err) {
         return res.status(400).send({ error: 'Falha no cadastro de novo usuário.' })
@@ -207,6 +206,33 @@ module.exports = {
     } catch (error) {
       console.log(error)
       res.status(500).json({ error: 'Erro ao excluir o usuário' })
+    }
+  },
+
+  // Obtém todos os links de um usuário específico
+  getUserLinks: async (req, res) => {
+    try {
+
+      let userIdRequest;
+      if (req.headers.authorization)
+        userIdRequest = getUserIdFromToken(req.headers.authorization)
+
+      const userId = req.params.user_id;
+
+      let links;
+
+      if (userIdRequest !== userId) {
+        links = await Link.find({ user: userId, isPublic: true });
+      } else {
+        links = await Link.find({ user: userId });
+      }
+
+      res.status(200).json(links);
+
+    } catch (error) {
+
+      console.log(error)
+      res.status(500).json({ error: 'Não foi possível obter os links do usuário' });
     }
   }
 }

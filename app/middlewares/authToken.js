@@ -28,6 +28,26 @@ module.exports = {
 
       return next()
     })
+  },
+
+  getUserIdFromToken: (token) => {
+    try {
+
+      if (token.split(" ").length > 1)
+        token = token.split(" ")[1]
+
+      const decoded = jwt.decode(token);
+      console.log(decoded)
+
+
+      return decoded.id;
+    } catch (error) {
+      // Caso ocorra algum erro na verificação do token
+      console.error('Erro na verificação do token:', error);
+      return null;
+    }
   }
 
+
 }
+
