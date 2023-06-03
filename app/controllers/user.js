@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken')
 const modelsUser = require('../models/User')
 const crypto = require('crypto')
 
-const client = require('../../modules/mailer')
+const emailService = require('../../services/emailService')
+const attributeExistenceMiddleware = require('../middlewares/attributeExistenceMiddleware')
 
 const { User } = modelsUser()
 
@@ -18,28 +19,40 @@ const generateToken = (params = {}) => {
 module.exports = {
 
   // register
-  register: async (req, res) => {
-    const { email } = req.body
+  register: [
+    attributeExistenceMiddleware(User),
+    async (req, res) => {
+      const { email } = req.body
 
-    try {
-      if (await User.findOne({ email })) {
-        return res.status(400).send({ error: 'User already exists.' })
+      try {
+        if (await User.findOne({ email })) {
+          return res.status(400).send({ error: 'Já existe um usuário cadastrado com esse email' })
+        }
+
+        const user = new User(req.body)
+
+        const validationError = user.validateSync();
+
+        if (validationError) {
+          const errorMessages = Object.values(validationError.errors).map(error => error.message);
+          return res.status(400).json({ error: errorMessages.join('\n') });
+        }
+
+        await user.save()
+
+        user.password = undefined
+        
+        await emailService.sendWelcomeEmail(user);
+
+        return res.send({
+          user
+        })
+
+      } catch (err) {
+        return res.status(400).send({ error: 'Falha no cadastro de novo usuário.' })
       }
-
-      const user = new User(req.body)
-      await user.save()
-
-      user.password = undefined
-
-      return res.send({
-        user,
-        token: generateToken({ id: user.id })
-      })
-
-    } catch (err) {
-      return res.status(400).send({ error: 'Registration failed.' })
     }
-  }
+  ]
   ,
   // authenticate
   auth: async (req, res) => {
@@ -63,74 +76,42 @@ module.exports = {
     })
   }
   ,
-
-  // user profile
-  userProfile: async (req, res) => {
-    res.send({ ok: true, user: req.userId })
-  }
-  ,
   // forgot password
-  forgotPassword: async (req, res) => {
-    const { email } = req.body
+  forgotPassword: [
+    attributeExistenceMiddleware(User),
+    async (req, res) => {
+      const { email } = req.body;
 
-    try {
-      const user = await User.findOne({ email })
+      try {
+        const user = await User.findOne({ email });
 
-      if (!user)
-        return res.status(400).send({ error: 'User not found.' })
-
-      const token = crypto.randomBytes(20).toString('hex')
-
-      const now = new Date()
-      now.setHours(now.getHours() + 1)
-
-      await User.findByIdAndUpdate(user.id, {
-        '$set': {
-          passwordResetToken: token,
-          passwordResetExpires: now
+        if (!user) {
+          return res.status(400).send({ error: 'User not found.' });
         }
-      })
 
-      // .sendMail({
-      //   from: 'ronier.lim@gmail.com',
-      //   to: email,
-      //   subject: 'Link para Resetar sua Senha ✔',
-      //   text: `Utilize o token ${token} para resetar sua senha`,
-      // }, (err) => {
-      //   if (err)
-      //     return res.status(400).send({ error: 'Cannot send forgot password email' })
+        const token = crypto.randomBytes(20).toString('hex')
 
-      //   return res.status(200).send({ message: "Email send successfully" })
-      // })
+        const now = new Date()
+        now.setHours(now.getHours() + 1)
 
-      client
-        .send({
-          from: {
-            email: "mailtrap@ronierlima.dev",
-            name: "Mailtrap Test",
-          },
-          to: [{
-            email: "ronier.lim@gmail.com",
-          }],
-          template_uuid: "20deed01-4f02-4026-902e-2a90c9c46b29",
-          template_variables: {
-            "user_email": token,
-            "user_token": token
+        await User.findByIdAndUpdate(user.id, {
+          '$set': {
+            passwordResetToken: token,
+            passwordResetExpires: now
           }
         })
-        .then(() => res.status(200).send({ message: "Email send successfully" }), (error) => {
-          console.log(error)
-          return res.status(400).send({ error: 'Cannot send forgot password email' })
-        }
-        );
 
+        await emailService.sendForgotPasswordEmail(user);
 
-    } catch (err) {
-      console.log(err)
-      return res.status(400).send({ error: 'Error on forgot password, try again' })
+        return res.status(200).send({ message: 'E-mail enviado com sucesso' });
+
+      } catch (err) {
+        console.log(err);
+        return res.status(400).send({ error: 'Erro ao solicitar a redefinição de senha, tente novamente' });
+      }
     }
-  }
-  ,
+  ],
+
   // reset password
   resetPassword: async (req, res) => {
     const { email, token, password } = req.body
@@ -159,17 +140,75 @@ module.exports = {
       res.status(400).send({ error: 'Cannot reset password, try again.' })
     }
   }
+
   ,
-  listUsers: async (req, res) => {
+  listUsers: async (_, res) => {
     try {
       const users = await User.find().select('-passwordResetToken -passwordResetExpires')
+      res.json(users)
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({ error: 'Erro ao buscar os usuários' })
+    }
+  },
 
-      return res.send(users)
-    } catch (err) {
-      return res.status(400).send({ error: 'Error fetching users.' })
+  getUserById: async (req, res) => {
+    const userId = req.params.user_id
+
+    try {
+      const user = await User.findById(userId)
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' })
+      }
+
+      res.json(user)
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({ error: 'Erro ao buscar o usuário' })
+    }
+  },
+
+  updateUserById: [
+    attributeExistenceMiddleware(User),
+    async (req, res) => {
+      const userId = req.params.user_id
+
+      delete req.body.isAdmin
+
+      try {
+        const user = await User.findByIdAndUpdate(
+          userId,
+          { $set: req.body }, // Usando o operador $set para atualizar os atributos recebidos no corpo da solicitação
+          { new: true }
+        )
+
+        if (!user) {
+          return res.status(404).json({ error: 'Usuário não encontrado' })
+        }
+
+        res.json(user)
+      } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: 'Erro ao atualizar o usuário' })
+      }
+    }
+  ],
+
+  deleteUserById: async (req, res) => {
+    const userId = req.params.user_id
+
+    try {
+      const user = await User.findByIdAndRemove(userId)
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' })
+      }
+
+      res.json({ message: 'Usuário excluído com sucesso' })
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({ error: 'Erro ao excluir o usuário' })
     }
   }
-
 }
 
 

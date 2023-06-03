@@ -1,6 +1,9 @@
+const fs = require('fs');
+
 const app = require('express')()
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const swaggerUi = require('swagger-ui-express');
 
 require('dotenv').config()
 require('./config/db')
@@ -15,14 +18,33 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cors())
 
 //ROTAS
-app.post('/register', userController.register)
+
+app.get('/swagger.json', (_, res) => {
+  const swaggerDocument = JSON.parse(fs.readFileSync('./config/swagger.json', 'utf-8'));
+
+
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerDocument);
+});
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(null, {
+  swaggerUrl: '/swagger.json',
+}));
+
 app.post('/auth', userController.auth)
 app.post('/auth/forgot_password', userController.forgotPassword)
 app.post('/auth/reset_password', userController.resetPassword)
 
-app.route('/user')
+app.route('/users')
+  .post(userController.register)
   .all(authTokenMiddleware.authenticationJWT)
-  .get(userController.userProfile)
+  .get(userController.listUsers)
+
+app.route('/users/:user_id')
+  .all(authTokenMiddleware.authenticationJWT)
+  .get(userController.getUserById)
+  .put(userController.updateUserById)
+  .delete(userController.deleteUserById)
 
 
 app.get("/", (req, res) => {

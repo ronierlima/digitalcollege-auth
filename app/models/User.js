@@ -6,17 +6,18 @@ module.exports = () => {
   const UserSchema = new Schema({
     name: {
       type: String,
-      required: true
+      required: true,
+      required: [true, 'O campo name é obrigatório.']
     },
     email: {
       type: String,
       unique: true,
-      required: true,
-      lowercase: true
+      lowercase: true,
+      required: [true, 'O campo email é obrigatório.']
     },
     password: {
       type: String,
-      required: true,
+      required: [true, 'O campo password é obrigatório.'],
       minLength: 7,
       select: false
     },
@@ -34,7 +35,6 @@ module.exports = () => {
     },
     isAdmin: {
       type: Boolean,
-      required: true,
       default: false
     }
   })

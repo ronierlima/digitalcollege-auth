@@ -19,7 +19,6 @@
     "mailtrap": "^3.1.1",
     "mongoose": "^5.6.10",
     "nodemailer": "^6.3.0",
-    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^4.6.3"
   }
 }

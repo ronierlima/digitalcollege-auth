@@ -1,33 +1,36 @@
 const mongoose = require('mongoose')
-const bcrypt = require('bcryptjs')
 const Schema = mongoose.Schema
 
 module.exports = () => {
-  const ProjectSchema = new Schema({
+  const LinkSchema = new Schema({
     title: {
       type: String,
       required: true
     },
     description: {
+      type: String
+    },
+    url: {
       type: String,
       required: true
+    },
+    isPublic: {
+      type: Boolean,
+      required: true,
+      default: true
     },
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true
     },
-    tasks: [{
-      type: Schema.Types.ObjectId,
-      ref: 'Task'
-    }],
     createdAt: {
       type: Date,
       default: Date.now
     }
   })
 
-  const Project = mongoose.model('Project', ProjectSchema)
+  const Link = mongoose.model('Link', LinkSchema)
 
-  return { Project }
+  return { Link }
 }
