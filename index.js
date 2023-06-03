@@ -1,10 +1,12 @@
-const app = require('express')()
+const express = require('express');
 const bodyParser = require('body-parser')
 const cors = require('cors')
-const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 
 require('dotenv').config()
 require('./config/db')
+
+const app = express();
 
 const userController = require('./app/controllers/user');
 const authTokenMiddleware = require('./app/middlewares/authToken');
@@ -17,16 +19,13 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cors())
 
 //ROTAS
+app.use('/swagger-ui', express.static(path.join(__dirname, 'swagger-ui')));
 
 app.get('/swagger.json', (_, res) => {
 
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerDocument);
 });
-
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(null, {
-  swaggerUrl: '/swagger.json',
-}));
 
 app.post('/auth', userController.auth)
 app.post('/auth/forgot_password', userController.forgotPassword)
