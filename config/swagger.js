@@ -1,4 +1,4 @@
-{
+export default swagger = {
   "openapi": "3.0.0",
   "info": {
     "title": "Documentação da API de Usuários",
@@ -247,7 +247,7 @@
       }
     },
     "/users/{user_id}": {
-      
+
       "get": {
         "summary": "Obter usuário por ID",
         "tags": ["Usuários"],

@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 const app = require('express')()
 const bodyParser = require('body-parser')
 const cors = require('cors')
@@ -10,6 +8,7 @@ require('./config/db')
 
 const userController = require('./app/controllers/user');
 const authTokenMiddleware = require('./app/middlewares/authToken');
+const swaggerDocument = require('./config/swagger')
 
 const port = process.env.PORT || 3000
 
@@ -20,8 +19,6 @@ app.use(cors())
 //ROTAS
 
 app.get('/swagger.json', (_, res) => {
-  const swaggerDocument = JSON.parse(fs.readFileSync('./config/swagger.json', 'utf-8'));
-
 
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerDocument);
