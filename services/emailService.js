@@ -5,11 +5,11 @@ const pass = process.env.MAILTRAP_TOKEN;
 const ENDPOINT = process.env.MAILTRAP_ENDPOINT;
 const client = new MailtrapClient({ endpoint: ENDPOINT, token: pass });
 
-const sendForgotPasswordEmail = async (user) => {
+const sendForgotPasswordEmail = async (user, token) => {
     const templateUuid = process.env.RECUPERAR_SENHA_TEMPLATE_UUID;
     const templateVariables = {
         user_email: user.email,
-        code: 111
+        code: token
         // outras variáveis específicas para a recuperação de senha, se necessário
     };
 
@@ -28,7 +28,6 @@ const sendForgotPasswordEmail = async (user) => {
 
 const sendWelcomeEmail = async (user) => {
 
-    console.log("vou")
     const templateUuid = process.env.BEM_VINDO_TEMPLATE_UUID;
     const templateVariables = {
         user_email: user.email,

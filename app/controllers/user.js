@@ -87,12 +87,14 @@ module.exports = {
           }
         })
 
-        await emailService.sendForgotPasswordEmail(user);
+        const response = await emailService.sendForgotPasswordEmail(user, token);
+
+        console.log(response)
 
         return res.status(200).send({ message: 'E-mail enviado com sucesso' });
 
       } catch (err) {
-        console.log(err);
+        console.log(err)
         return res.status(400).send({ error: 'Erro ao solicitar a redefinição de senha, tente novamente' });
       }
     }
