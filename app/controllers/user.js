@@ -209,9 +209,9 @@ module.exports = {
       let links;
 
       if (userIdRequest !== userId) {
-        links = await Link.find({ user: userId, isPublic: true });
+        links = await Link.find({ userId: userId, isPublic: true });
       } else {
-        links = await Link.find({ user: userId });
+        links = await Link.find({ userId: userId });
       }
 
       res.status(200).json(links);
