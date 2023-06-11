@@ -15,7 +15,7 @@ module.exports = {
 
       try {
 
-        const link = new Link({ ...req.body, user: userId, })
+        const link = new Link({ ...req.body, userId: userId, })
 
         const validationError = link.validateSync();
 
