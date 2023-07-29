@@ -104,9 +104,9 @@ module.exports = {
         return res.status(404).json({ error: 'Link não encontrado' })
       }
 
-      if (userIdRequest !== link.userId) {
-        return res.status(403).json({ error: 'Link não pertence ao usuário' })
-      }
+      // if (userIdRequest !== link.userId) {
+      //   return res.status(403).json({ error: 'Link não pertence ao usuário' })
+      // }
 
       res.json({ message: 'Link excluído com sucesso' })
     } catch (error) {
